@@ -18,7 +18,7 @@ use warnings;
 
 require Exporter;
 
-our $VERSION = '1.01';
+our $VERSION = '1.1';
 ## See Changes file
 
 our @defaults = ( 
@@ -92,7 +92,7 @@ sub uniquepairs {
 	}
 
 sub incrementkeys {
-	return compare => sub { $_[0] <=> $_[1] } ;
+	return compare => sub { ( $_[0] || 0 ) <=> ( $_[1] || 0 ) } ;
 	}
 
 sub envsetup {
@@ -158,6 +158,17 @@ sub recordset {
 	return @values ;
 	}
 
+## experimental to improve durability
+sub sync {
+	my $ref = shift ;
+	my $self = tied %$ref ;
+	$self->db_sync ;
+	}
+
+sub syncall {
+	map { $_->db_sync } values %dbreg ;
+	}
+
 ## intended for duplicatekeys
 sub delete {
 	my $ref = shift ;
@@ -183,6 +194,12 @@ sub DESTROY {
 	return unless $self ;
 
 	delete $dbreg{ $self->[0] } ;
+
+	## Sleepycat suggests that as an RPC client, db_close is a noop.
+	## In that case, db_sync ought to be called instead.
+	## How to check whether db's env uses RPC?
+	eval { $self->db_sync } ;
+
 	eval { $self->db_close } ;
 	}
 
