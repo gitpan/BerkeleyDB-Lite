@@ -1,20 +1,20 @@
-BerkeleyDB/Lite version 0.04
+BerkeleyDB/Lite version 1.10
 ============================
 
-The README is used to introduce the module and provide instructions on
-how to install the module, any machine dependencies it may have (for
-example C compilers and installed libraries) and any other information
-that should be provided before the module is installed.
+BerkeleyDB::Lite streamlines the use of BerkeleyDB.pm.  For example,
+a single constructor acquires both the necessary env and db handles; and
+methods wrap common cursor operations.
 
-A README file is required for CPAN modules since CPAN extracts the
-README file from a module distribution so that people browsing the
-archive can use it get an idea of the modules uses. It is usually a
-good idea to provide version information here so that people can
-decide whether fixes for the module are worth downloading.
+This installation will place all BerkeleyDB files under a single root.  
+This root directory is defined as the 'rootdir' member of the @defaults 
+structure.  This definition can be overridden in the constructors.
 
 INSTALLATION
 
-To install this module type the following:
+To install this module, edit line 25 of Lite.pm to specify an appropriate
+root directory.
+
+Then type the following:
 
    perl Makefile.PL
    make
@@ -30,5 +30,5 @@ This module requires these other modules and libraries:
 
 COPYRIGHT AND LICENCE
 
-Copyright (C) 2003 Jim Schueler
+Copyright (C) 2003, 2004 Jim Schueler
 
