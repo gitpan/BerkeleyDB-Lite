@@ -18,7 +18,7 @@ use warnings;
 
 require Exporter;
 
-our $VERSION = '0.10';
+our $VERSION = '1.01';
 ## See Changes file
 
 our @defaults = ( 
@@ -249,10 +249,8 @@ sub scalars {
 	my( $self, %self ) ;
 
 	my %env = BerkeleyDB::Lite::envsetup( @_ ) ;
-	croak $! unless $env{'-Env'} ;
 
 	my %alt = @_ ;
-
 	my $filename = $env{filename} ;
 	delete $env{filename} ;
 
@@ -260,7 +258,8 @@ sub scalars {
 	$self = tie %self, $alt{subclass} || 'BerkeleyDB::Btree',
 			%env,
 			-Flags => DB_CREATE, 
-			or warn "$filename $!" ;
+			or warn "$filename $!"
+			if $env{'-Env'} ;
 
 	## Failsafe- open R/O without locking
 	if ( $filename && ! $self ) {
