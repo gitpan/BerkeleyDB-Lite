@@ -1,4 +1,4 @@
-package BerkeleyDB::Lite ;
+package BerkeleyDB::Tie ;
 
 #     Copyright (c) 1997-2001 Jim Schueler. All rights reserved.
 #     This program is free software; you can redistribute it and/or
@@ -19,14 +19,14 @@ use warnings;
 require Exporter;
 
 our $VERSION = '0.04';
-## 0.04 Renamed BerkeleyDB::Lite
+## 0.04 Renamed BerkeleyDB::Tie
 ##	Added %dbreg registry
 ## 0.03 Added uniquepairs
 ##	Added subclass property
 ## 	Added uniquekeys
 ## 	Added recover option to envsetup
-## 0.02 Added BerkeleyDB::Lite::Btree::Lexical
-##	Added BerkeleyDB::Lite::Btree lexical constructor
+## 0.02 Added BerkeleyDB::Tie::Btree::Lexical
+##	Added BerkeleyDB::Tie::Btree lexical constructor
 ##      Added rootdir property
 ##      changed filter_store_value in new
 
@@ -42,7 +42,7 @@ our @ISA = qw( Exporter );
 # names by default without a very good reason. Use EXPORT_OK instead.
 # Do not simply export all your public functions/methods/constants.
 
-# This allows declaration	use BerkeleyDB::Lite::Hash ':all';
+# This allows declaration	use BerkeleyDB::Tie::Hash ':all';
 # If you do not need this, moving things directly into @EXPORT or @EXPORT_OK
 # will save memory.
 
@@ -52,9 +52,9 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our @EXPORT = qw( duplicatekeys incrementkeys uniquepairs uniquekeys );
 
-## Problems have occured during global destruction if Env objects are
-## closed before database objects.  %dbreg closes all open databases 
-## first.
+## Problems have occured during automatic destruction if Env objects are
+## destroyed/close before database objects.  %dbreg closes all open 
+## databases before automatic destruction.
 END {
 	map { eval { $_->db_close } } values %dbreg ;
 	}
@@ -189,19 +189,19 @@ sub DESTROY {
 	}
 
 
-package BerkeleyDB::Lite::Hash ;
+package BerkeleyDB::Tie::Hash ;
 
 use BerkeleyDB ;
 use Carp ;
 
-our @ISA = qw( BerkeleyDB::Lite ) ;
+our @ISA = qw( BerkeleyDB::Tie ) ;
 
 sub scalars {
 	my $invocator = shift ;
 	my $class = ref $invocator || $invocator ;
 	my( $self, %self ) ;
 
-	my %env = BerkeleyDB::Lite::envsetup( @_ ) ;
+	my %env = BerkeleyDB::Tie::envsetup( @_ ) ;
 	croak $! unless $env{'-Env'} ;
 
 	my %alt = @_ ;
@@ -232,18 +232,18 @@ sub scalars {
 	}
 
 
-package BerkeleyDB::Lite::Btree ;
+package BerkeleyDB::Tie::Btree ;
 
 use BerkeleyDB ;
 use Carp ;
 
-our @ISA = qw( BerkeleyDB::Lite ) ;
+our @ISA = qw( BerkeleyDB::Tie ) ;
 
 sub lexical {
 	my $invocator = shift ;
 	my $class = ref $invocator || $invocator ;
 
-	return BerkeleyDB::Lite::Btree::Lexical->new( @_ ) ;
+	return BerkeleyDB::Tie::Btree::Lexical->new( @_ ) ;
 	}
 
 sub scalars {
@@ -251,7 +251,7 @@ sub scalars {
 	my $class = ref $invocator || $invocator ;
 	my( $self, %self ) ;
 
-	my %env = BerkeleyDB::Lite::envsetup( @_ ) ;
+	my %env = BerkeleyDB::Tie::envsetup( @_ ) ;
 	croak $! unless $env{'-Env'} ;
 
 	my %alt = @_ ;
@@ -354,15 +354,15 @@ sub nextrecord {
 	}
 
 
-package BerkeleyDB::Lite::Btree::Lexical ;
+package BerkeleyDB::Tie::Btree::Lexical ;
 	
-our @ISA = qw( BerkeleyDB::Lite::Btree ) ;
+our @ISA = qw( BerkeleyDB::Tie::Btree ) ;
 
 sub scalars {
 	my $invocator = shift ;
 	my $class = ref $invocator || $invocator ;
 
-	my $self = BerkeleyDB::Lite::Btree->scalars( @_ ) ;
+	my $self = BerkeleyDB::Tie::Btree->scalars( @_ ) ;
 	my $ref = tied %$self ;
 
 	return undef unless $ref ;
@@ -387,17 +387,17 @@ __END__
 
 =head1 NAME
 
-BerkeleyDB::Lite - Simplified Interface to BerkeleyDB
+BerkeleyDB::Tie - Simplified Interface to BerkeleyDB
 
 =head1 SYNOPSIS
 
-  use BerkeleyDB::Lite;
+  use BerkeleyDB::Tie;
 
 
 =head2 ## Example 1
 
   ## Create a Hashed database
-  my $db = new BerkeleyDB::Lite::Hash
+  my $db = new BerkeleyDB::Tie::Hash
 		home => 'zoo',
 		filename => 'residents' ;
 
@@ -409,7 +409,7 @@ BerkeleyDB::Lite - Simplified Interface to BerkeleyDB
 =head2 ## Example 2
 
   ## Create a Btree database allowing duplicates and scalar values
-  my $types = scalars BerkeleyDB::Lite::Btree
+  my $types = scalars BerkeleyDB::Tie::Btree
 		home => 'zoo',
 		filename => 'types',
 		&duplicatekeys ;
@@ -432,17 +432,17 @@ BerkeleyDB::Lite - Simplified Interface to BerkeleyDB
   ## Use a table with arbitrary keys
   ## Track visitors by date/timestamp
 
-  $tickets = new BerkeleyDB::Lite::Btree
+  $tickets = new BerkeleyDB::Tie::Btree
 		home => 'zoo',
 		filename => 'tickets',
 		&incrementkeys ;
 
   ## Lexical Alternative
-  # $tickets = lexical BerkeleyDB::Lite::Btree
+  # $tickets = lexical BerkeleyDB::Tie::Btree
   #		home => 'zoo',
   #		filename => 'tickets' ;
 
-  $bytime = scalars BerkeleyDB::Lite::Btree
+  $bytime = scalars BerkeleyDB::Tie::Btree
 		home => 'zoo',
 		filename => 'ticketsbytime',
 		&duplicatekeys ;
@@ -450,8 +450,8 @@ BerkeleyDB::Lite - Simplified Interface to BerkeleyDB
   ## Process a new visitor in real time
   sub newvisitor {
 	my $serial = $tickets->nextrecord() ;
-        my $date = getdate() ;	## not part of BerkeleyDB::Lite
-	my $time = gettime() ;	## not part of BerkeleyDB::Lite
+        my $date = getdate() ;	## not part of BerkeleyDB::Tie
+	my $time = gettime() ;	## not part of BerkeleyDB::Tie
 
 	$tickets->{$serial} = { @_ } ;
 	$bytime->{ "$date $time" } = $serial ;
@@ -466,25 +466,25 @@ BerkeleyDB::Lite - Simplified Interface to BerkeleyDB
 
 =head1 DESCRIPTION
 
-BerkeleyDB::Lite is an interface to Paul Marquess's BerkeleyDB
+BerkeleyDB::Tie is an interface to Paul Marquess's BerkeleyDB
 that provides simplified constructors, tied access to data, and 
 methods for returning multiple record sets.
 
 =head2 Example 1
 
-BerkeleyDB::Lite maintains BerkeleyDB environment references
+BerkeleyDB::Tie maintains BerkeleyDB environment references
 in a package scoped hash keyed on the B<home> argument.  The 
-basic BerkeleyDB::Lite constructor arguments define the 
+basic BerkeleyDB::Tie constructor arguments define the 
 BerkeleyDB environment and database.  When the constructor 
 is called, a previously opened environment is used if 
 available.  Otherwise, a new environment is created and is 
 available to future constructor requests.
 
-This version of BerkeleyDB::Lite creates all environment objects 
+This version of BerkeleyDB::Tie creates all environment objects 
 as concurrent data stores.  Transactional data storage is not 
 currently integrated.
 
-By default, BerkeleyDB::Lite is designed to marshall objects into a 
+By default, BerkeleyDB::Tie is designed to marshall objects into a 
 database using the B<Storable> module.
 
 Example 1 shows a simple application that illustrates both of 
@@ -512,11 +512,11 @@ constants as a shortcut.  The constants are defined in the
 BerkeleyDB module.
 
 The B<recordset> method returns a stored list from the database.  
-This method is available to both BerkeleyDB::Lite::Btree and
-BerkeleyDB::Lite::Hash classes.
+This method is available to both BerkeleyDB::Tie::Btree and
+BerkeleyDB::Tie::Hash classes.
 
 The B<delete> method is used to delete an element from the list.  
-Since BerkeleyDB::Lite adheres to the B<Tie> interface, the 
+Since BerkeleyDB::Tie adheres to the B<Tie> interface, the 
 B<delete> keyword can normally used to remove stored objects.  
 The B<delete> method should be used on databases with duplicate 
 keys to avoid indeterminate results.
@@ -553,7 +553,7 @@ second argument may refer to an object that does not exactly
 match the stored value.  The following code illustrates this 
 difficulty:
 
-  my $cats = new BerkeleyDB::Lite::Btree(
+  my $cats = new BerkeleyDB::Tie::Btree(
 		home => 'zoo',
 		filename => 'cats',
 		&duplicatekeys,
@@ -584,15 +584,15 @@ context.  The following example illustrates the situation:
 Example 3 shows a few additional features helpful to 
 developers accustomed to relational databases.  These 
 features take advantage of the B<Btree> database capabilities, 
-and are not available to BerkeleyDB::Lite::Hash objects.
+and are not available to BerkeleyDB::Tie::Hash objects.
 
-The B<nextrecord> method of BerkeleyDB::Lite::Btree returns 
+The B<nextrecord> method of BerkeleyDB::Tie::Btree returns 
 a new unique key.  Each B<nextrecord> call creates a new 
 blank record to avoid race conditions, and returns the new 
 key.  This method creates a key by adding 1 to the last 
 record.  In order to ensure that the last record contains 
 the highest valued key, use the B<&incrementkeys> argument 
-to the BerkeleyDB::Lite::Btree constructor.  The 
+to the BerkeleyDB::Tie::Btree constructor.  The 
 B<&incrementkeys> function is a shortcut that returns a 
 CODE constant that forces numerical Btree sorting.
 
@@ -601,17 +601,17 @@ using the B<&incrementkeys> argument.  The resulting
 databases are incompatible with SleepyCat utilities such as 
 B<db_dump> and B<db_verify>.  As an alternative, 
 B<nextrecord> can be called as a method from the
-BerkeleyDB::Lite::Btree::Lexical subclass.  This subclass 
+BerkeleyDB::Tie::Btree::Lexical subclass.  This subclass 
 functions identically, but the numerical keys are stored 
 as zero padded strings.  Therefore, a restriction on 
 B<Lexical> subclass databases is that keys must be 
 numerically less than 10,000,000,000.
 
-The B<lexical> constructor to the BerkeleyDB::Lite::Btree 
+The B<lexical> constructor to the BerkeleyDB::Tie::Btree 
 class is synonymous with the B<new> constructor to the 
-BerkeleyDB::Lite::Btree::Lexical subclass.
+BerkeleyDB::Tie::Btree::Lexical subclass.
 
-BerkeleyDB::Lite also implements another nice Berkeley
+BerkeleyDB::Tie also implements another nice Berkeley
 feature: partial string matching.  The methods 
 B<matchingkeys>, B<matchingvalues>, and B<searchset> 
 all return a set of records whose keys begin with a 

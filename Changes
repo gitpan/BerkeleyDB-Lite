@@ -1,5 +1,18 @@
 Revision history for Perl extension BerkeleyDB::Lite.
 
+0.04	Renamed BerkeleyDB::Tie to BerkeleyDB::Lite
+	Added %dbreg registry
+
+0.03	Added uniquepairs (experimtental)
+	Added uniquekeys
+	Added subclass property
+	Added recover option to envsetup (experimental)
+
+0.02	Added BerkeleyDB::Lite::Btree::Lexical
+	Added BerkeleyDB::Lite::Btree lexical constructor
+	Added rootdir property
+	changed filter_store_value in new to handle non-refs
+
 0.01  Tue Feb 18 10:31:08 2003
 	- original version; created by h2xs 1.21 with options
 		-A -P -X BerkeleyDB::Lite
