@@ -18,8 +18,17 @@ use warnings;
 
 require Exporter;
 
-our $VERSION = '0.10';
-## See Changes file
+our $VERSION = '0.04';
+## 0.04 Renamed BerkeleyDB::Lite
+##	Added %dbreg registry
+## 0.03 Added uniquepairs
+##	Added subclass property
+## 	Added uniquekeys
+## 	Added recover option to envsetup
+## 0.02 Added BerkeleyDB::Lite::Btree::Lexical
+##	Added BerkeleyDB::Lite::Btree lexical constructor
+##      Added rootdir property
+##      changed filter_store_value in new
 
 our @defaults = ( 
 		rootdir => "/usr/local/apache/cgi-bin/db" 
@@ -47,14 +56,7 @@ our @EXPORT = qw( duplicatekeys incrementkeys uniquepairs uniquekeys );
 ## closed before database objects.  %dbreg closes all open databases 
 ## first.
 END {
-	closeall() ;
-	}
-
-## Run closeall if forking child processes.  All references must be destroyed
-## first.
-sub closeall {
 	map { eval { $_->db_close } } values %dbreg ;
-	%env = () ;
 	}
 
 sub new {
@@ -200,8 +202,10 @@ sub scalars {
 	my( $self, %self ) ;
 
 	my %env = BerkeleyDB::Lite::envsetup( @_ ) ;
+	croak $! unless $env{'-Env'} ;
 
 	my %alt = @_ ;
+
 	my $filename = $env{filename} ;
 	delete $env{filename} ;
 
@@ -209,8 +213,7 @@ sub scalars {
 	$self = tie %self, $alt{subclass} || 'BerkeleyDB::Hash',
 			%env,
 			-Flags => DB_CREATE, 
-			or warn "($$) $filename: $!"
-			if $env{'-Env'} ;
+			or warn "($$) $filename: $!" ;
 
 	## Failsafe- open R/O without locking
 	if ( $filename && ! $self ) {
@@ -306,7 +309,9 @@ sub dosearch {
 			$unique{ $key }++ ;
 			}
 		else {
-			push @each, [ $key, $value ] ;
+			push @keys, $key ;
+			push @values, $value ;
+			push @each, $key, $value ;
 			}
 
 		$status = $cursor->c_get( $key, $value, DB_NEXT ) ;
@@ -314,20 +319,23 @@ sub dosearch {
 
 	
 	$cursor = undef ;
-	@each = map { [ $_, $unique{$_} ] } keys %unique if $isunique ;
-	return \@each ;
+	return [ keys %unique ], [], [ %unique ] if $isunique ;
+	return [ @keys ], [ @values ], [ @each ] ;
 	}
 
 sub matchingkeys {
-	return map { $_->[0] } @{ dosearch( @_ ) } ;
+	my @s = dosearch( @_ ) ;
+	return @{ $s[0] } ;
 	}
 
 sub matchingvalues {
-	return map { $_->[1] } @{ dosearch( @_ ) } ;
+	my @s = dosearch( @_ ) ;
+	return @{ $s[1] } ;
 	}
 
 sub searchset {
-	return map { @$_ } @{ dosearch( @_ ) } ;
+	my @s = dosearch( @_ ) ;
+	return @{ $s[2] } ;
 	}
 
 ## intended for Btree's with incremented keys
